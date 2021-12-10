@@ -111,21 +111,25 @@ public class TrackedEntityCriteriaMapper
             }
         }
 
-        for ( String orgUnit : criteria.getOrgUnits() )
+        if ( criteria.getOuMode() != OrganisationUnitSelectionMode.ALL && user != null )
         {
-            OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( orgUnit );
-
-            if ( organisationUnit == null )
+            for ( String orgUnit : criteria.getOrgUnits() )
             {
-                throw new IllegalQueryException( "Organisation unit does not exist: " + orgUnit );
-            }
 
-            if ( !organisationUnitService.isInUserHierarchy( organisationUnit.getUid(), possibleSearchOrgUnits ) )
-            {
-                throw new IllegalQueryException( "Organisation unit is not part of the search scope: " + orgUnit );
-            }
+                OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( orgUnit );
 
-            params.getOrganisationUnits().add( organisationUnit );
+                if ( organisationUnit == null )
+                {
+                    throw new IllegalQueryException( "Organisation unit does not exist: " + orgUnit );
+                }
+
+                if ( !organisationUnitService.isInUserHierarchy( organisationUnit.getUid(), possibleSearchOrgUnits ) )
+                {
+                    throw new IllegalQueryException( "Organisation unit is not part of the search scope: " + orgUnit );
+                }
+
+                params.getOrganisationUnits().add( organisationUnit );
+            }
         }
 
         validateAssignedUser( criteria );
