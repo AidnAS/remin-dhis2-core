@@ -189,12 +189,14 @@ public class DefaultTrackedEntityInstanceService
 
         //Avoiding NullPointerException
         String accessedBy = user != null ? user.getUsername() : currentUserService.getCurrentUsername();
-
+        
+        // REMOVE AUDITING FOR SEARCH
+        /*
         for ( TrackedEntityInstance tei : trackedEntityInstances )
         {
             addTrackedEntityInstanceAudit( tei, accessedBy, AuditType.SEARCH );
         }
-
+        */
         return trackedEntityInstances;
     }
 
@@ -355,13 +357,14 @@ public class DefaultTrackedEntityInstanceService
                 te = trackedEntityTypeService.getTrackedEntityType( entity.get( TRACKED_ENTITY_ID ) );
                 trackedEntityTypes.put( entity.get( TRACKED_ENTITY_ID ), te );
             }
-
+               
+            /* REMOVE AUDITING FOR SEARCH
             if ( te != null && te.isAllowAuditLog() && accessedBy != null )
             {
                 TrackedEntityInstanceAudit trackedEntityInstanceAudit = new TrackedEntityInstanceAudit( entity.get( TRACKED_ENTITY_INSTANCE_ID ), accessedBy, AuditType.SEARCH );
                 trackedEntityInstanceAuditService.addTrackedEntityInstanceAudit( trackedEntityInstanceAudit );
             }
-
+            */
             for ( QueryItem item : params.getAttributes() )
             {
                 grid.addValue( entity.get( item.getItemId() ) );
@@ -776,13 +779,13 @@ public class DefaultTrackedEntityInstanceService
         attributeValueAuditService.deleteTrackedEntityAttributeValueAudits( instance );
         trackedEntityInstanceStore.delete( instance );
     }
-
+    
     @Override
     @Transactional( readOnly = true )
     public TrackedEntityInstance getTrackedEntityInstance( long id )
     {
         TrackedEntityInstance tei = trackedEntityInstanceStore.get( id );
-
+        
         addTrackedEntityInstanceAudit( tei, currentUserService.getCurrentUsername(), AuditType.READ );
 
         return tei;
@@ -866,6 +869,7 @@ public class DefaultTrackedEntityInstanceService
 
     private void addTrackedEntityInstanceAudit( TrackedEntityInstance trackedEntityInstance, String user, AuditType auditType )
     {
+        
         if ( user != null && trackedEntityInstance != null && trackedEntityInstance.getTrackedEntityType() != null && trackedEntityInstance.getTrackedEntityType().isAllowAuditLog() )
         {
             TrackedEntityInstanceAudit trackedEntityInstanceAudit = new TrackedEntityInstanceAudit( trackedEntityInstance.getUid(), user, auditType );

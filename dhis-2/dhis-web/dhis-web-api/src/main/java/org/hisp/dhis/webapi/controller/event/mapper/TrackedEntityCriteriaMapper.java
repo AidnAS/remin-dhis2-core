@@ -80,14 +80,7 @@ public class TrackedEntityCriteriaMapper
         final Date programEnrollmentEndDate = ObjectUtils.firstNonNull( criteria.getProgramEnrollmentEndDate(),
             criteria.getProgramEndDate() );
 
-        Set<OrganisationUnit> possibleSearchOrgUnits = new HashSet<>();
-
-        User user = currentUserService.getCurrentUser();
-
-        if ( user != null )
-        {
-            possibleSearchOrgUnits = user.getTeiSearchOrganisationUnitsWithFallback();
-        }
+       
 
         QueryFilter queryFilter = getQueryFilter( criteria.getQuery() );
 
@@ -110,9 +103,17 @@ public class TrackedEntityCriteriaMapper
                 params.getFilters().add( it );
             }
         }
-
+        User user = currentUserService.getCurrentUser();
         if ( criteria.getOuMode() != OrganisationUnitSelectionMode.ALL && user != null )
         {
+             Set<OrganisationUnit> possibleSearchOrgUnits = new HashSet<>();
+
+
+            if ( user != null )
+            {
+                possibleSearchOrgUnits = user.getTeiSearchOrganisationUnitsWithFallback();
+            }
+            
             for ( String orgUnit : criteria.getOrgUnits() )
             {
 
@@ -138,6 +139,7 @@ public class TrackedEntityCriteriaMapper
         {
             params.getOrganisationUnits().addAll( user.getOrganisationUnits() );
         }
+        
         Program program = validateProgram( criteria );
         params.setQuery( queryFilter )
             .setProgram( program )

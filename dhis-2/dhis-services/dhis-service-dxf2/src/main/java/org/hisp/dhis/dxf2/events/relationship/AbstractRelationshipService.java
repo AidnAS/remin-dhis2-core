@@ -210,10 +210,10 @@ public abstract class AbstractRelationshipService
         importOptions = updateImportOptions( importOptions );
 
         ImportSummaries importSummaries = new ImportSummaries();
-
+        reloadUser( importOptions );
         for ( List<Relationship> _relationships : partitions )
         {
-            reloadUser( importOptions );
+           
             prepareCaches( _relationships, importOptions.getUser() );
 
             for ( Relationship relationship : _relationships )
