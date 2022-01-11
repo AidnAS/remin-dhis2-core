@@ -723,7 +723,7 @@ public class DefaultTrackedEntityInstanceService
     public long addTrackedEntityInstance( TrackedEntityInstance instance )
     {
         trackedEntityInstanceStore.save( instance );
-
+        addTrackedEntityInstanceAudit( instance, currentUserService.getCurrentUsername(), AuditType.CREATE );
         return instance.getId();
     }
 
@@ -738,8 +738,10 @@ public class DefaultTrackedEntityInstanceService
             attributeValueService.addTrackedEntityAttributeValue( pav );
             instance.getTrackedEntityAttributeValues().add( pav );
         }
-
+        
         updateTrackedEntityInstance( instance ); // Update associations
+        
+        addTrackedEntityInstanceAudit( instance, currentUserService.getCurrentUsername(), AuditType.UPDATE );
 
         return id;
     }
@@ -756,6 +758,7 @@ public class DefaultTrackedEntityInstanceService
     public void updateTrackedEntityInstance( TrackedEntityInstance instance )
     {
         trackedEntityInstanceStore.update( instance );
+        addTrackedEntityInstanceAudit( instance, currentUserService.getCurrentUsername(), AuditType.UPDATE );
     }
 
     @Override
@@ -763,6 +766,7 @@ public class DefaultTrackedEntityInstanceService
     public void updateTrackedEntityInstance( TrackedEntityInstance instance, User user )
     {
         trackedEntityInstanceStore.update( instance, user );
+        addTrackedEntityInstanceAudit( instance, currentUserService.getCurrentUsername(), AuditType.UPDATE );
     }
 
     @Override
@@ -777,7 +781,10 @@ public class DefaultTrackedEntityInstanceService
     public void deleteTrackedEntityInstance( TrackedEntityInstance instance )
     {
         attributeValueAuditService.deleteTrackedEntityAttributeValueAudits( instance );
+        
+        addTrackedEntityInstanceAudit( instance, currentUserService.getCurrentUsername(), AuditType.DELETE );
         trackedEntityInstanceStore.delete( instance );
+        
     }
     
     @Override
@@ -796,7 +803,8 @@ public class DefaultTrackedEntityInstanceService
     public TrackedEntityInstance getTrackedEntityInstance( String uid )
     {
         TrackedEntityInstance tei = trackedEntityInstanceStore.getByUid( uid );
-        addTrackedEntityInstanceAudit( tei, currentUserService.getCurrentUsername(), AuditType.READ );
+        // REMOVE AUDITING FOR SEARCH
+        //addTrackedEntityInstanceAudit( tei, currentUserService.getCurrentUsername(), AuditType.READ );
 
         return tei;
     }
@@ -804,8 +812,10 @@ public class DefaultTrackedEntityInstanceService
     @Override
     public TrackedEntityInstance getTrackedEntityInstance( String uid, User user )
     {
+        
         TrackedEntityInstance tei = trackedEntityInstanceStore.getByUid( uid );
-        addTrackedEntityInstanceAudit( tei, User.username( user ), AuditType.READ );
+        // REMOVE AUDITING FOR SEARCH
+        // addTrackedEntityInstanceAudit( tei, User.username( user ), AuditType.READ );
 
         return tei;
     }

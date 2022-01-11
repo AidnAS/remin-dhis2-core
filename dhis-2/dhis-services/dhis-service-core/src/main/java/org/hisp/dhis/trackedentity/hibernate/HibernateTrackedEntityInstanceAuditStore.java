@@ -42,6 +42,7 @@ import javax.persistence.criteria.Root;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.SessionFactory;
 import org.hisp.dhis.audit.payloads.TrackedEntityInstanceAudit;
+import org.hisp.dhis.common.AuditType;
 import org.hisp.dhis.hibernate.HibernateGenericStore;
 import org.hisp.dhis.hibernate.JpaQueryParameters;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
@@ -72,12 +73,17 @@ public class HibernateTrackedEntityInstanceAuditStore
     @Override
     public void addTrackedEntityInstanceAudit( TrackedEntityInstanceAudit trackedEntityInstanceAudit )
     {
-        getSession().save( trackedEntityInstanceAudit );
+        // REMOVE AUDITING FOR SEARCH
+        if(!trackedEntityInstanceAudit.getAuditType().equals(AuditType.SEARCH)){
+            getSession().save( trackedEntityInstanceAudit );
+        }
+        
     }
 
     @Override
     public void addTrackedEntityInstanceAudit( List<TrackedEntityInstanceAudit> trackedEntityInstanceAudit )
     {
+        
         final String sql = "INSERT INTO trackedentityinstanceaudit (" +
                 "trackedentityinstanceauditid, " +
                 "trackedentityinstance, " +
@@ -99,7 +105,8 @@ public class HibernateTrackedEntityInstanceAuditStore
             return sb.toString();
         };
 
-        final String values = trackedEntityInstanceAudit.stream().map( mapToString )
+        final String values = trackedEntityInstanceAudit
+            .stream().map( mapToString )
             .collect( Collectors.joining( "," ) );
 
         getSession().createNativeQuery( sql + values ).executeUpdate();
