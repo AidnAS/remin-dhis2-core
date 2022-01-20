@@ -21,9 +21,11 @@ shopt -s nullglob globstar
 ## script environment
 #
 
+ONLY_DEFAULT="true"
+
 TOMCAT_IMAGE="tomcat"
 
-DEFAULT_TOMCAT_TAG="8.5-jdk8-openjdk-slim"
+DEFAULT_TOMCAT_TAG="9.0-jdk8-openjdk-slim"
 
 TOMCAT_DEBIAN_TAGS=(
     "8.5-jdk11-openjdk-slim"
