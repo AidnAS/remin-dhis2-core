@@ -37,6 +37,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.hisp.dhis.common.hibernate.HibernateIdentifiableObjectStore;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramStageInstance;
@@ -68,37 +69,46 @@ public class HibernateRelationshipStore
     @Override
     public List<Relationship> getByTrackedEntityInstance( TrackedEntityInstance tei )
     {
-        CriteriaBuilder builder = getCriteriaBuilder();
+        String hql =
+            "SELECT DISTINCT r " +
+            "FROM RelationshipItem ri " +
+            "JOIN ri.relationship r " +
+            "WHERE ri.trackedEntityInstance = :tei";
 
-        return getList( builder, newJpaParameters()
-            .addPredicate( root ->
-                builder.or(
-                    builder.equal( root.join( "from" ).get( "trackedEntityInstance" ), tei )
-                    ,builder.equal( root.join( "to" ).get( "trackedEntityInstance" ), tei ) ) ) );
+        Query<Relationship> query = getQuery( hql );
+        query.setParameter( "tei", tei );
+
+        return query.list();
     }
 
     @Override
     public List<Relationship> getByProgramInstance( ProgramInstance pi )
     {
-        CriteriaBuilder builder = getCriteriaBuilder();
+        String hql =
+            "SELECT DISTINCT r " +
+            "FROM RelationshipItem ri " +
+            "JOIN ri.relationship r " +
+            "WHERE ri.programInstance = :pi";
 
-        return getList( builder, newJpaParameters()
-            .addPredicate( root ->
-                builder.or(
-                    builder.equal( root.join( "from" ).get( "programInstance" ), pi )
-                    ,builder.equal( root.join( "to" ).get( "programInstance" ), pi ) ) ) );
+        Query<Relationship> query = getQuery( hql );
+        query.setParameter( "pi", pi );
+
+        return query.list();
     }
 
     @Override
     public List<Relationship> getByProgramStageInstance( ProgramStageInstance psi )
     {
-        CriteriaBuilder builder = getCriteriaBuilder();
+        String hql =
+            "SELECT DISTINCT r " +
+            "FROM RelationshipItem ri " +
+            "JOIN ri.relationship r " +
+            "WHERE ri.programStageInstance = :psi";
 
-        return getList( builder, newJpaParameters()
-            .addPredicate( root ->
-                builder.or(
-                    builder.equal( root.join( "from" ).get( "programStageInstance" ), psi )
-                    ,builder.equal( root.join( "to" ).get( "programStageInstance" ), psi ) ) ) );
+        Query<Relationship> query = getQuery( hql );
+        query.setParameter( "psi", psi );
+
+        return query.list();
     }
 
     @Override
