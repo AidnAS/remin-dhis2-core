@@ -114,7 +114,7 @@ public class HibernateTrackedEntityInstanceStore
     private final StatementBuilder statementBuilder;
 
     private final static String SELECT_TEI = "select tei from";
-    
+
     public HibernateTrackedEntityInstanceStore( SessionFactory sessionFactory, JdbcTemplate jdbcTemplate,
         ApplicationEventPublisher publisher, CurrentUserService currentUserService,
         AclService aclService, OrganisationUnitStore organisationUnitStore, StatementBuilder statementBuilder )
@@ -201,7 +201,7 @@ public class HibernateTrackedEntityInstanceStore
             .replaceFirst( "order by case when pi.status = 'ACTIVE' then 1 when pi.status = 'COMPLETED' then 2 else 3 end asc, tei.lastUpdated desc ", "" )
             .replaceFirst( "order by tei.lastUpdated desc ", "" );
     }
-    
+
     private String withProgram( TrackedEntityInstanceQueryParams params, SqlHelper hlp )
     {
         String hql = "";
@@ -280,7 +280,7 @@ public class HibernateTrackedEntityInstanceStore
         }
         return hql;
     }
-    
+
     private String withFilters( TrackedEntityInstanceQueryParams params, SqlHelper hlp )
     {
         String hql = "";
@@ -306,7 +306,7 @@ public class HibernateTrackedEntityInstanceStore
         }
         return hql;
     }
-    
+
     private String buildTrackedEntityInstanceHql( TrackedEntityInstanceQueryParams params, boolean idOnly )
     {
         SqlHelper hlp = new SqlHelper( true );
@@ -317,7 +317,7 @@ public class HibernateTrackedEntityInstanceStore
         String teiOuSource = params.hasProgram() ? "po.organisationUnit" : "tei.organisationUnit";
 
         hql += withProgram( params, hlp );
-        
+
         // If sync job, fetch only TEAVs that are supposed to be synchronized
 
         hql += addConditionally( params.isSynchronizationQuery(),
@@ -346,7 +346,7 @@ public class HibernateTrackedEntityInstanceStore
         }
 
         hql += addWhereConditionally( hlp, params.isSynchronizationQuery(), () -> "tei.lastUpdated > tei.lastSynchronized");
-        
+
         // Comparing milliseconds instead of always creating new Date( 0 )
 
         if ( params.getSkipChangedBefore() != null && params.getSkipChangedBefore().getTime() > 0 )
@@ -397,7 +397,7 @@ public class HibernateTrackedEntityInstanceStore
                 "ou.uid as " + ORG_UNIT_ID + ", " +
                 "ou.name as " + ORG_UNIT_NAME + ", " +
                 "te.uid as " + TRACKED_ENTITY_ID + ", " +
-                (params.hasProgram() ? "en.status as enrollment_status, " : "") +
+                // (params.hasProgram() ? "en.status as enrollment_status, " : "") +
                 (params.isIncludeDeleted() ? "tei.deleted as " + DELETED + ", " : "") +
                 "tei.inactive as " + INACTIVE_ID + ", ";
 
@@ -523,44 +523,54 @@ public class HibernateTrackedEntityInstanceStore
             sql += params.getProgram().getId() + ") as tepo ON tei.trackedentityinstanceid = tepo.trackedentityinstanceid ";
             teiOuSource = "tepo.organisationunitid";
 
-            sql += "inner join ("
-                + "select trackedentityinstanceid, min(case when status='ACTIVE' then 0 when status='COMPLETED' then 1 else 2 end) as status "
-                + "from programinstance pi ";
-
-            if ( params.hasFilterForEvents() )
-            {
-                sql += " inner join (select programinstanceid from programstageinstance psi ";
-
-                sql += addConditionally( params.hasAssignedUsers(), () -> "left join userinfo au on (psi.assigneduserid=au.userinfoid)" );
-
-                sql += getEventWhereClause( params );
-
-                sql += ") as psi on pi.programinstanceid = psi.programinstanceid ";
-            }
-
-            sql += " where pi.programid= " + params.getProgram().getId() + " ";
-
-            sql += addConditionally( params.hasProgramStatus(),
-                () -> "and status = '" + params.getProgramStatus() + "' " );
-
-            sql += addConditionally( params.hasFollowUp(), () -> "and pi.followup = " + params.getFollowUp() );
-
-            sql += addConditionally( params.hasProgramEnrollmentStartDate(), () -> "and pi.enrollmentdate >= '"
-                + getMediumDateString( params.getProgramEnrollmentStartDate() ) + "' " );
-
-            sql += addConditionally( params.hasProgramEnrollmentEndDate(), () -> "and pi.enrollmentdate <= '"
-                + getMediumDateString( params.getProgramEnrollmentEndDate() ) + "' " );
-
-            sql += addConditionally( params.hasProgramIncidentStartDate(),
-                () -> "and pi.incidentdate >= '" + getMediumDateString( params.getProgramIncidentStartDate() ) + "' " );
-
-            sql += addConditionally( params.hasProgramIncidentEndDate(),
-                () -> "and pi.incidentdate <= '" + getMediumDateString( params.getProgramIncidentEndDate() ) + "' " );
-
-            sql += addConditionally( params.isIncludeDeleted(),
-                () -> "and pi.deleted is false" );
-
-            sql += " group by trackedentityinstanceid ) as en on tei.trackedentityinstanceid = en.trackedentityinstanceid ";
+        //---------------------------------------------------------------------
+        // These joins add ~1s to these queries and are not needed by
+        // our implementation. Commenting out here is the simplest method
+        // of removing the join globally. Some or all of this might be
+        // needed in the future if any of the associated values become
+        // filterable in the Remin application.
+        //
+        // We've also commented out associated lines in the SELECT and
+        // ORDER BY portions of these queries (search for `en.status`).
+        //---------------------------------------------------------------------
+        //     sql += "inner join ("
+        //         + "select trackedentityinstanceid, min(case when status='ACTIVE' then 0 when status='COMPLETED' then 1 else 2 end) as status "
+        //         + "from programinstance pi ";
+        //
+        //     if ( params.hasFilterForEvents() )
+        //     {
+        //         sql += " inner join (select programinstanceid from programstageinstance psi ";
+        //
+        //         sql += addConditionally( params.hasAssignedUsers(), () -> "left join userinfo au on (psi.assigneduserid=au.userinfoid)" );
+        //
+        //         sql += getEventWhereClause( params );
+        //
+        //         sql += ") as psi on pi.programinstanceid = psi.programinstanceid ";
+        //     }
+        //
+        //     sql += " where pi.programid= " + params.getProgram().getId() + " ";
+        //
+        //     sql += addConditionally( params.hasProgramStatus(),
+        //         () -> "and status = '" + params.getProgramStatus() + "' " );
+        //
+        //     sql += addConditionally( params.hasFollowUp(), () -> "and pi.followup = " + params.getFollowUp() );
+        //
+        //     sql += addConditionally( params.hasProgramEnrollmentStartDate(), () -> "and pi.enrollmentdate >= '"
+        //         + getMediumDateString( params.getProgramEnrollmentStartDate() ) + "' " );
+        //
+        //     sql += addConditionally( params.hasProgramEnrollmentEndDate(), () -> "and pi.enrollmentdate <= '"
+        //         + getMediumDateString( params.getProgramEnrollmentEndDate() ) + "' " );
+        //
+        //     sql += addConditionally( params.hasProgramIncidentStartDate(),
+        //         () -> "and pi.incidentdate >= '" + getMediumDateString( params.getProgramIncidentStartDate() ) + "' " );
+        //
+        //     sql += addConditionally( params.hasProgramIncidentEndDate(),
+        //         () -> "and pi.incidentdate <= '" + getMediumDateString( params.getProgramIncidentEndDate() ) + "' " );
+        //
+        //     sql += addConditionally( params.isIncludeDeleted(),
+        //         () -> "and pi.deleted is false" );
+        //
+        //     sql += " group by trackedentityinstanceid ) as en on tei.trackedentityinstanceid = en.trackedentityinstanceid ";
         }
 
         sql += "inner join organisationunit ou on " + teiOuSource + " = ou.organisationunitid ";
@@ -588,7 +598,7 @@ public class HibernateTrackedEntityInstanceStore
                 }
             }
         }
-        
+
         sql += addWhereConditionally( hlp, params.hasTrackedEntityInstances(),
             () -> " tei.uid in (" + getQuotedCommaDelimitedString( params.getTrackedEntityInstanceUids() ) + ")" );
 
@@ -706,10 +716,10 @@ public class HibernateTrackedEntityInstanceStore
             }
         }
 
-        if ( params.hasProgram() )
-        {
-            return "order by en.status asc, lastUpdated desc ";
-        }
+        // if ( params.hasProgram() )
+        // {
+        //     return "order by en.status asc, lastUpdated desc ";
+        // }
 
         return "order by lastUpdated desc ";
     }
@@ -754,7 +764,7 @@ public class HibernateTrackedEntityInstanceStore
                 sql += " psi.duedate >= '" + start + "' and psi.duedate <= '" + end + "' " + "and psi.status = '" + EventStatus.SKIPPED.name() + "' and ";
             }
         }
-        
+
         if ( params.hasProgramStage() )
         {
             sql += " psi.programstageid = " + params.getProgramStage().getId() + " and ";
@@ -818,7 +828,7 @@ public class HibernateTrackedEntityInstanceStore
                 hql += " psi.dueDate >= '" + start + "' and psi.dueDate <= '" + end + "' " + "and psi.status = '" + EventStatus.SKIPPED.name() + "' and ";
             }
         }
-        
+
         if ( params.hasProgramStage() )
         {
             hql += " psi.programStage.uid = " + params.getProgramStage().getUid() + " and ";
