@@ -1,0 +1,30 @@
+name: Build Docker image
+
+on:
+  push:
+    branches:
+      - remin/master
+
+jobs:
+  docker:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: remote-registry.aidn.no
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: remote-registry.aidn.no/remin/dhis2-core:${{ github.sha }},remote-registry.aidn.no/remin/dhis2-core:latest
+          cache-to: type=inline
+          cache-from: type=registry,ref=remote-registry.aidn.no/remin/dhis2-core:latest
