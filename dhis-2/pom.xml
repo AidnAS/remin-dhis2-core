@@ -1670,9 +1670,9 @@
         <version>1.3.2</version>
       </dependency>
       <dependency>
-        <groupId>javax.xml.ws</groupId>
-        <artifactId>jaxws-api</artifactId>
-        <version>2.4.0</version>
+        <groupId>jakarta.xml.ws</groupId>
+        <artifactId>jakarta.xml.ws-api</artifactId>
+        <version>3.0.1</version>
         <exclusions>
           <exclusion>
             <groupId>javax.xml.soap</groupId>
