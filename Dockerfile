@@ -3,7 +3,7 @@ FROM --platform=$BUILDPLATFORM maven:3.8.4-jdk-8-slim AS build
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install --no-install-recommends -y \
-        git procps-ng && \
+        git && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -14,6 +14,8 @@ RUN mvn clean install -T1C -f pom.xml -DskipTests
 RUN mvn clean install -T1C -U -f dhis-web/pom.xml -DskipTests
 
 FROM tomcat:9-jdk8-corretto
+
+RUN yum -y install procps-ng
 
 RUN rm -rf /usr/local/tomcat/webapps/*
 
